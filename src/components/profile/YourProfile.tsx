@@ -48,20 +48,20 @@ const YourProfile: React.FC<YourProfileProps> = ({ isMobile, onClose }) => {
                     sx={{
                         p: 0.5,
                         borderRadius: '50%',
-                        background: 'linear-gradient(45deg, #6A4BFF 50%, transparent 50%)', // Vòng màu tím
+                        background: 'linear-gradient(45deg, #6A4BFF 50%, transparent 50%)',
                         mb: 2
                     }}
                 >
                     <Avatar
-                        src="https://i.pravatar.cc/150?img=11" // Ảnh đại diện ảo
+                        src="/images/avatars/avt-danle.png"
                         sx={{ width: 80, height: 80, border: '4px solid white' }}
                     />
                 </Box>
                 <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                    Good Morning Prashant
+                    Danle
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 0.5 }}>
-                    Continue Your Journey And Achieve Your Target
+                    Hãy tiếp tục hành trình và đạt được mục tiêu của bạn!
                 </Typography>
             </Box>
 

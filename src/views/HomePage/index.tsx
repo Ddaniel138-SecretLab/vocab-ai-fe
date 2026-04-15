@@ -1,53 +1,73 @@
+// src/views/HomeView.tsx
 import React from 'react';
-import { Box, Button, Typography, AppBar, Toolbar, Container } from '@mui/material';
-import { useRouter } from 'next/router';
+import { Box, Fab, Zoom, useScrollTrigger } from '@mui/material';
+import { KeyboardArrowUp } from '@mui/icons-material';
+import { Navbar } from '@/components/Navbar'; // Đổi đường dẫn cho khớp dự án của bạn
+import { HeroSection } from './components/HeroSection';
+import { FeaturesSection } from './components/FeaturesSection';
+import { HowItWorksSection } from './components/HowItWorksSection';
+import { Footer } from '@/components/Footer'; // Import Footer bạn vừa tạo
 
-const HomeView: React.FC = () => {
-    const router = useRouter();
+// Component xử lý hiệu ứng hiện nút cuộn lên
+const ScrollTop = (props: { children: React.ReactElement }) => {
+    const { children } = props;
+    // trigger sẽ là true khi cuộn xuống qua 400px
+    const trigger = useScrollTrigger({
+        disableHysteresis: true,
+        threshold: 400,
+    });
+
+    const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth',
+        });
+    };
 
     return (
-        <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-            {/* Navbar */}
-            <AppBar position="static" color="transparent" elevation={0} sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
-                <Container maxWidth="lg">
-                    <Toolbar disableGutters sx={{ justifyContent: 'space-between' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Box sx={{ p: 1, bgcolor: 'primary.main', borderRadius: 1, color: 'white', display: 'flex' }}>
-                                ✨
-                            </Box>
-                            <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold' }}>
-                                VOCAB AI
-                            </Typography>
-                        </Box>
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            onClick={() => router.push('/login')}
-                            sx={{ px: 3, borderRadius: 2 }}
-                        >
-                            Login
-                        </Button>
-                    </Toolbar>
-                </Container>
-            </AppBar>
+        <Zoom in={trigger}>
+            <Box
+                onClick={handleClick}
+                role="presentation"
+                sx={{ position: 'fixed', bottom: 32, right: 32, zIndex: 1000 }}
+            >
+                {children}
+            </Box>
+        </Zoom>
+    );
+};
 
-            <Container maxWidth="md" sx={{ mt: 10, textAlign: 'center' }}>
-                <Typography variant="h3" sx={{ fontWeight: 'bold', mb: 2, color: 'text.primary' }}>
-                    Học từ vựng thông minh cùng AI
-                </Typography>
-                <Typography variant="h6" sx={{ color: 'text.secondary', mb: 4 }}>
-                    Cá nhân hoá lộ trình và tạo ví dụ sinh động dựa trên sở thích của riêng bạn.
-                </Typography>
-                <Button
-                    variant="contained"
-                    color="primary"
-                    size="large"
-                    onClick={() => router.push('/login')}
-                    sx={{ py: 1.5, px: 4, fontSize: '1.1rem', borderRadius: 2 }}
+const HomeView: React.FC = () => {
+    return (
+        <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', overflowX: 'hidden' }}>
+            <Navbar />
+
+            {/* Dùng id="back-to-top-anchor" nếu bạn muốn scroll tới chính xác một div nào đó, 
+                nhưng ở đây mình đã dùng window.scrollTo({ top: 0 }) nên thẻ main cứ để bình thường */}
+            <Box sx={{ marginTop: '70px' }} component="main">
+                <HeroSection />
+                <FeaturesSection />
+                <HowItWorksSection />
+            </Box>
+
+            <Footer />
+
+            {/* Nút FAB Scroll to top */}
+            <ScrollTop>
+                <Fab
+                    size="medium"
+                    aria-label="scroll back to top"
+                    sx={{
+                        background: 'linear-gradient(to right, #1976d2, #9c27b0)',
+                        color: 'white',
+                        '&:hover': {
+                            opacity: 0.9,
+                        }
+                    }}
                 >
-                    Bắt đầu ngay
-                </Button>
-            </Container>
+                    <KeyboardArrowUp />
+                </Fab>
+            </ScrollTop>
         </Box>
     );
 };

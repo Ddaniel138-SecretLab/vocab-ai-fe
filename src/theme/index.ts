@@ -27,7 +27,6 @@ const themeOptions: ThemeOptions = {
     },
   },
   typography: {
-    // 2. Gán trực tiếp fontFamily của Inter vào Material UI
     fontFamily: inter.style.fontFamily,
     button: {
       textTransform: 'none',

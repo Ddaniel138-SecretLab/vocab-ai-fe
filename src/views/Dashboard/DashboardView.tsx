@@ -4,6 +4,7 @@ import HeroBanner from "@/views/Dashboard/components/HeroBanner";
 import QuickStats from "@/views/Dashboard/components/QuickStats";
 import ContinueLearning from "./components/ContinueLearning";
 import AIContextExplore from "./components/AIContextExplore";
+import RecentActivities from "./components/RecentActivities";
 
 const DashboardView: React.FC = () => {
     return (
@@ -30,6 +31,10 @@ const DashboardView: React.FC = () => {
             
             <Box sx={{ mt: 6, mb: 4 }}>
                <AIContextExplore />
+            </Box>
+
+            <Box sx={{ mb: 4 }}>
+                <RecentActivities />
             </Box>
         </Box>
     );

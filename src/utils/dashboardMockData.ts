@@ -40,3 +40,34 @@ export const RECOMMENDED_TOPICS = [
     { id: "topic_3", title: "Tiếng Anh Đàm phán", icon: "🤝", wordsCount: 50 },
     { id: "topic_4", title: "Thuyết trình dự án", icon: "📊", wordsCount: 65 },
 ];
+
+export const RECENT_ACTIVITIES = [
+    {
+        id: "act_1",
+        type: "streak",
+        title: "Đạt chuỗi học 7 ngày liên tiếp",
+        time: "Vừa xong",
+        points: "+100 XP"
+    },
+    {
+        id: "act_2",
+        type: "word_mastered",
+        title: "Đã thuộc 5 từ vựng mới",
+        time: "2 giờ trước",
+        points: "+25 XP"
+    },
+    {
+        id: "act_3",
+        type: "lesson_completed",
+        title: "Hoàn thành Mini Test: Giao tiếp công sở",
+        time: "Hôm qua",
+        points: "+50 XP"
+    },
+    {
+        id: "act_4",
+        type: "word_mastered",
+        title: "Đã thuộc từ: Meticulous",
+        time: "Hôm qua",
+        points: "+5 XP"
+    },
+];

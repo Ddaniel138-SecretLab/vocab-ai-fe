@@ -136,7 +136,7 @@ const AIContextExplore: React.FC = () => {
             </Box>
             
             <Button fullWidth sx={{ mt: 2, color: 'text.secondary', '&:hover': { color: 'primary.main' } }}>
-              Xem tất cả chủ đề
+              Gợi ý chủ đề khác
             </Button>
           </Card>
         </Grid>

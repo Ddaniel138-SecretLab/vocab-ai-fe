@@ -1,29 +1,28 @@
 import React from 'react';
-import { 
-  Box, 
-  Drawer, 
-  List, 
-  ListItem, 
-  ListItemButton, 
-  ListItemIcon, 
-  ListItemText, 
-  Typography, 
+import {
+  Box,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Typography,
   IconButton,
   useTheme,
   useMediaQuery
 } from '@mui/material';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import MailIcon from '@mui/icons-material/Mail';
-import MenuBookIcon from '@mui/icons-material/MenuBook';
-import AssignmentIcon from '@mui/icons-material/Assignment';
-import GroupIcon from '@mui/icons-material/Group';
-import SettingsIcon from '@mui/icons-material/Settings';
-import LogoutIcon from '@mui/icons-material/Logout';
+import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
+import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
+import AutoFixHighRoundedIcon from '@mui/icons-material/AutoFixHighRounded';
+import QuizRoundedIcon from '@mui/icons-material/QuizRounded';
+import InsertChartRoundedIcon from '@mui/icons-material/InsertChartRounded';
+import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
+import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { useRouter } from 'next/router';
 
-// Chiều rộng cố định của Sidebar khi mở
 export const SIDEBAR_WIDTH = 260;
 
 interface SidebarProps {
@@ -38,13 +37,12 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, desktopOpen, onMobileClos
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const router = useRouter();
 
-  // Danh sách menu OVERVIEW
   const overviewMenu = [
-    { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
-    { text: 'Inbox', icon: <MailIcon />, path: '/inbox' },
-    { text: 'Lesson', icon: <MenuBookIcon />, path: '/lesson' },
-    { text: 'Task', icon: <AssignmentIcon />, path: '/task' },
-    { text: 'Group', icon: <GroupIcon />, path: '/group' },
+    { text: 'Tổng quan', icon: <DashboardRoundedIcon />, path: '/user/dashboard', isDisabled: false },
+    { text: 'Sổ tay từ vựng', icon: <MenuBookRoundedIcon />, path: '/user/vocabulary', isDisabled: false },
+    { text: 'Luyện tập AI', icon: <AutoFixHighRoundedIcon />, path: '/user/ai-practice', isDisabled: true },
+    { text: 'Kiểm tra & Ôn tập', icon: <QuizRoundedIcon />, path: '/user/quizzes', isDisabled: true },
+    { text: 'Tiến độ học', icon: <InsertChartRoundedIcon />, path: '/user/progress', isDisabled: true },
   ];
 
   const handleLogout = () => {
@@ -52,7 +50,6 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, desktopOpen, onMobileClos
     router.push('/login');
   };
 
-  // Nội dung chính của Sidebar
   const drawerContent = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: 'background.paper' }}>
       {/* Logo & Toggle Button */}
@@ -65,7 +62,6 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, desktopOpen, onMobileClos
             VOCAB AI
           </Typography>
         </Box>
-        {/* Nút đóng mở Sidebar */}
         <IconButton onClick={isMobile ? onMobileClose : onDesktopToggle} size="small" sx={{ color: 'text.secondary' }}>
           <MenuOpenIcon sx={{ transform: desktopOpen ? 'none' : 'rotate(180deg)', transition: '0.3s' }} />
         </IconButton>
@@ -74,18 +70,25 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, desktopOpen, onMobileClos
       {/* Menu Overview */}
       <Box sx={{ px: 2, flexGrow: 1 }}>
         <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'text.secondary', ml: 2, mb: 1, display: 'block' }}>
-          OVERVIEW
+          MAIN MENU
         </Typography>
         <List sx={{ pt: 0 }}>
           {overviewMenu.map((item) => {
-            const isActive = router.pathname === item.path; // Check active tạm thời qua route
+            // Logic Active: Sáng lên khi URL hiện tại khớp với path
+            const isActive = router.pathname.startsWith(item.path);
+
             return (
               <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
-                <ListItemButton 
-                  sx={{ 
+                <ListItemButton
+                  // Chuyển hướng khi click
+                  onClick={() => router.push(item.path)}
+                  disabled={item.isDisabled}
+                  sx={{
                     borderRadius: 2,
                     color: isActive ? 'primary.main' : 'text.secondary',
-                    bgcolor: isActive ? 'primary.50' : 'transparent', // Nền mờ nếu active
+                    bgcolor: isActive ? 'primary.light' : 'transparent',
+                    // Chỉnh lại màu nền mờ khi active cho đẹp hơn
+                    ...(isActive && { bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(106, 75, 255, 0.15)' : 'rgba(106, 75, 255, 0.08)' }),
                     '&:hover': { bgcolor: 'action.hover' }
                   }}
                 >
@@ -103,19 +106,19 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, desktopOpen, onMobileClos
       {/* Menu Settings */}
       <Box sx={{ px: 2, pb: 3 }}>
         <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'text.secondary', ml: 2, mb: 1, display: 'block' }}>
-          SETTINGS
+          SYSTEM
         </Typography>
         <List sx={{ pt: 0 }}>
           <ListItem disablePadding sx={{ mb: 0.5 }}>
-            <ListItemButton sx={{ borderRadius: 2, color: 'text.secondary' }}>
-              <ListItemIcon sx={{ color: 'inherit', minWidth: 40 }}><SettingsIcon /></ListItemIcon>
-              <ListItemText primary={<Typography sx={{ fontWeight: 'medium' }}>Settings</Typography>} />
+            <ListItemButton disabled onClick={() => router.push('/settings')} sx={{ borderRadius: 2, color: 'text.secondary' }}>
+              <ListItemIcon sx={{ color: 'inherit', minWidth: 40 }}><SettingsRoundedIcon /></ListItemIcon>
+              <ListItemText primary={<Typography sx={{ fontWeight: 'medium' }}>Cài đặt</Typography>} />
             </ListItemButton>
           </ListItem>
           <ListItem disablePadding>
             <ListItemButton onClick={handleLogout} sx={{ borderRadius: 2, color: 'error.main' }}>
-              <ListItemIcon sx={{ color: 'inherit', minWidth: 40 }}><LogoutIcon /></ListItemIcon>
-              <ListItemText primary={<Typography sx={{ fontWeight: 'medium' }}>Logout</Typography>} />
+              <ListItemIcon sx={{ color: 'inherit', minWidth: 40 }}><LogoutRoundedIcon /></ListItemIcon>
+              <ListItemText primary={<Typography sx={{ fontWeight: 'medium' }}>Đăng xuất</Typography>} />
             </ListItemButton>
           </ListItem>
         </List>

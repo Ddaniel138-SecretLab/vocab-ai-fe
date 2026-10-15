@@ -1,12 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, { useMemo, useState } from 'react';
-import { Box, Typography, TextField, Button, InputAdornment, useTheme, Stack, alpha, Chip, Divider, Pagination } from '@mui/material';
-import { AutoAwesome as AutoAwesomeIcon, Search as SearchIcon } from '@mui/icons-material';
+import { Alert, Box, Typography, Stack, alpha, Chip, Pagination } from '@mui/material';
 
 // Import Data & Components
 import { aiTopics, initialNotebookWords, generateWordsFromAI } from './constants';
-import { SuggestCard } from '@/components/Card/SuggestCard';
 import { VocabularyCard } from '@/components/Card/VocabularyCard';
 import { SearchInput } from './components/SearchInput';
 import { GeneratedWordsSection } from './components/GeneratedWordsSection';
@@ -14,7 +12,6 @@ import { GeneratedWordsSection } from './components/GeneratedWordsSection';
 const ITEMS_PER_PAGE = 12;
 
 const Vocabulary: React.FC = () => {
-    const theme = useTheme();
     const [promptSearch, setPromptSearch] = useState('');
 
     const [generatedWords, setGeneratedWords] = useState<any[]>([]);
@@ -44,6 +41,7 @@ const Vocabulary: React.FC = () => {
 
     return (
         <Box sx={{ pb: 4 }}>
+            <Alert severity="info" sx={{ mb: 3 }}>Đây là dữ liệu minh họa; danh sách từ và chức năng tạo từ chưa nối API học tập trong đợt này.</Alert>
             {/* ================= SECTION 1 ================= */}
             <Box sx={{ mb: 6 }}>
                 <Stack direction="row" sx={{ alignItems: 'center', mb: 2, gap: 2 }}>

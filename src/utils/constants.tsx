@@ -1,4 +1,2 @@
-export const TEST_ACCOUNT = {
-    username: 'test',
-    password: '123',
-  } as const;
+// Các tài khoản được xác thực qua API; không khai báo tài khoản mẫu tại frontend.
+export {};

@@ -17,9 +17,14 @@ interface AuthState {
   loading: boolean;
   error: string;
   refresh: () => Promise<void>;
-  login: (email: string, password: string) => Promise<void>;
+  login: (
+    email: string,
+    password: string,
+    adminOnly?: boolean,
+  ) => Promise<void>;
   register: (email: string, code: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
+  logout: (admin?: boolean) => Promise<void>;
+  clearSession: () => void;
   saveProfile: (input: ProfileInput) => Promise<void>;
 }
 const AuthContext = createContext<AuthState | null>(null);
@@ -83,12 +88,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         error,
         refresh,
-        login: (email, password) =>
-          authenticate(() => authApi.login(email, password)),
+        login: (email, password, adminOnly = false) =>
+          authenticate(() =>
+            adminOnly
+              ? authApi.adminLogin(email, password)
+              : authApi.login(email, password),
+          ),
         register: (email, code, password) =>
           authenticate(() => authApi.verifyCode(email, code, password)),
-        logout: async () => {
-          await authApi.logout();
+        clearSession: clear,
+        logout: async (admin = false) => {
+          if (admin) await authApi.adminLogout();
+          else await authApi.logout();
           clear();
         },
         saveProfile,

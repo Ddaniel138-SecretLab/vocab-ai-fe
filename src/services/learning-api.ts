@@ -20,6 +20,16 @@ const post = (body?: unknown): RequestInit => ({
   ...(body ? { body: JSON.stringify(body) } : {}),
 });
 export const learningApi = {
+  generateTopics: (count: number) =>
+    apiRequest<{
+      topics: import("@/types/learning").Topic[];
+      model: string;
+      quota: import("@/types/learning").DailyQuota;
+      vocabularyGenerated: boolean;
+    }>("/ai/topics", {
+      ...post({ count }),
+      signal: AbortSignal.timeout(180000),
+    }),
   createSession: (topicId: string, type: SessionType, size: number) =>
     apiRequest<{ session: StudySession }>(
       type === "FLASHCARD" ? "/study/flashcards" : "/study/quizzes",
@@ -47,7 +57,7 @@ export const learningApi = {
     ),
   generate: (topicId: string, count: number) =>
     apiRequest<GeneratedResult>(`/ai/topics/${topicId}/vocabulary`, {
-      ...post({ count }),
+      ...post({ count, fresh: true }),
       signal: AbortSignal.timeout(180000),
     }),
   resolveAudio: (topicId: string) =>

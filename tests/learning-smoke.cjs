@@ -63,6 +63,7 @@ let studiedToday = false,
   generateCount = 0,
   completeCount = 0;
 const user = {
+  role: "USER",
   id: "user-1",
   email: "student@example.com",
   emailVerifiedAt: "2026-10-15T00:00:00Z",
@@ -212,6 +213,15 @@ const server = http.createServer(async (req, res) => {
     });
   if (/\/vocabulary$/.test(route) && route.startsWith("/api/topics/"))
     return send(200, paginate(words, url));
+  if (route.endsWith("/quota") && route.startsWith("/api/ai/topics"))
+    return send(200, {
+      dateKey: "2026-10-16",
+      timeZone: "Asia/Ho_Chi_Minh",
+      limit: route.includes("vocabulary") ? 20 : 3,
+      used: 0,
+      reserved: 0,
+      remaining: route.includes("vocabulary") ? 20 : 3,
+    });
   if (route === "/api/ai/status")
     return send(200, {
       enabled: true,
@@ -536,6 +546,9 @@ const server = http.createServer(async (req, res) => {
           button.textContent === "Tạo thêm từ bằng AI" && !button.disabled,
       ),
     );
+    await page.getByLabel("Số từ AI").fill("21");
+    assert(await page.getByRole("button", {name:"Tạo thêm từ bằng AI",exact:true}).isDisabled());
+    await page.getByLabel("Số từ AI").fill("4");
     await page
       .getByRole("button", { name: "Tạo thêm từ bằng AI", exact: true })
       .evaluate((button) => {

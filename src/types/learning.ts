@@ -140,3 +140,12 @@ export interface GeneratedResult {
   words: Vocabulary[];
   audioMissing?: number;
 }
+
+export interface DailyQuota {
+  dateKey: string;
+  timeZone: string;
+  limit: number;
+  used: number;
+  reserved: number;
+  remaining: number;
+}

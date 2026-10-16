@@ -1,3 +1,4 @@
+import AiTopicsPanel from "@/components/ai/AiTopicsPanel";
 import { useState, type FormEvent } from "react";
 import {
   Box,
@@ -41,6 +42,12 @@ export default function TopicsView() {
       <PageTitle
         title="Chủ đề từ vựng"
         subtitle="Học theo chủ đề và trình độ của bạn, mỗi lần một chút."
+      />
+      <AiTopicsPanel
+        onCreated={() => {
+          list.reload();
+          recommended.reload();
+        }}
       />
       <Box sx={{ mb: 4 }}>
         <Typography variant="h6" sx={{ fontWeight: 700 }}>

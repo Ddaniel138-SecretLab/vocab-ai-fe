@@ -41,7 +41,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onMobileClose,
   onDesktopToggle,
 }) => {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState("");
   const theme = useTheme();
@@ -233,6 +233,11 @@ const Sidebar: React.FC<SidebarProps> = ({
           SYSTEM
         </Typography>
         <List sx={{ pt: 0 }}>
+          {user?.role === "ADMIN" && (
+            <ListItemButton onClick={() => void router.push("/admin")}>
+              <ListItemText primary="Quản trị" />
+            </ListItemButton>
+          )}
           <ListItem disablePadding sx={{ mb: 0.5 }}>
             <ListItemButton
               onClick={() => {

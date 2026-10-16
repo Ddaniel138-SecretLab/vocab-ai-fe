@@ -1,7 +1,9 @@
 export type SchoolStage = "MIDDLE_SCHOOL" | "HIGH_SCHOOL";
 export type EnglishLevel =
   "BEGINNER" | "BASIC" | "INTERMEDIATE" | "UPPER_INTERMEDIATE" | "ADVANCED";
+export type UserRole = "USER" | "ADMIN";
 export interface User {
+  role: UserRole;
   id: string;
   email: string;
   emailVerifiedAt: string | null;

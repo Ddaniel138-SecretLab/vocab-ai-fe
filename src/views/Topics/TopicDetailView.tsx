@@ -7,7 +7,6 @@ import {
   Button,
   Chip,
   Divider,
-  MenuItem,
   Paper,
   Stack,
   TextField,
@@ -17,6 +16,7 @@ import { useApiQuery } from "@/hooks/useApiQuery";
 import { learningApi } from "@/services/learning-api";
 import { errorMessage } from "@/lib/api-client";
 import type {
+  DailyQuota,
   Topic,
   Vocabulary,
   PageResult,
@@ -48,6 +48,9 @@ export default function TopicDetailView({ topicId }: { topicId: string }) {
     `/topics/${topicId}/vocabulary?page=${page}&limit=12`,
   );
   const ai = useApiQuery<AiStatus>("/ai/status");
+  const quota = useApiQuery<DailyQuota>(
+    `/ai/topics/${topicId}/vocabulary/quota`,
+  );
   async function action(name: string, run: () => Promise<void>) {
     if (lock.current) return;
     lock.current = true;
@@ -61,6 +64,7 @@ export default function TopicDetailView({ topicId }: { topicId: string }) {
     } finally {
       lock.current = false;
       setBusy("");
+      if (name === "ai") quota.reload();
     }
   }
   const start = (type: SessionType) =>
@@ -148,22 +152,27 @@ export default function TopicDetailView({ topicId }: { topicId: string }) {
               sx={{ alignItems: { sm: "center" }, flexWrap: "wrap" }}
             >
               <TextField
-                select
+                type="number"
                 label="Số từ AI"
+                slotProps={{ htmlInput: { min: 1, max: 20 } }}
                 size="small"
                 value={count}
                 onChange={(e) => setCount(Number(e.target.value))}
                 sx={{ minWidth: 110 }}
                 disabled={!!busy}
-              >
-                {[4, 6, 8].map((n) => (
-                  <MenuItem key={n} value={n}>
-                    {n} từ
-                  </MenuItem>
-                ))}
-              </TextField>
+              />
               <Button
-                disabled={!!busy || !ai.data?.enabled || !ai.data?.configured}
+                disabled={
+                  !!busy ||
+                  !ai.data?.enabled ||
+                  !ai.data?.configured ||
+                  !quota.data ||
+                  !Number.isInteger(count) ||
+                  count < 1 ||
+                  count > 20 ||
+                  count > quota.data.remaining ||
+                  count > 100 - topic.data.topic._count.vocabulary
+                }
                 onClick={() =>
                   void action("ai", async () => {
                     const result = await learningApi.generate(topicId, count);
@@ -196,6 +205,15 @@ export default function TopicDetailView({ topicId }: { topicId: string }) {
                   : "Bổ sung audio còn thiếu"}
               </Button>
             </Stack>
+            <QueryState {...quota} retry={quota.reload} />
+            {quota.data && (
+              <Typography variant="body2" sx={{ mt: 2 }}>
+                Chủ đề này còn {quota.data.remaining}/{quota.data.limit} từ mới
+                hôm nay; đã tạo {quota.data.used}, đang xử lý{" "}
+                {quota.data.reserved}. Hạn mức dùng chung cho tất cả người học,
+                theo ngày {quota.data.dateKey} ({quota.data.timeZone}).
+              </Typography>
+            )}
             {ai.error ? (
               <Typography variant="caption" color="error">
                 Chưa kiểm tra được AI: {ai.error}{" "}

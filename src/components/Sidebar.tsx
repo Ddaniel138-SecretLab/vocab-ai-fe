@@ -18,7 +18,6 @@ import {
 } from "@mui/material";
 import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
 import MenuBookRoundedIcon from "@mui/icons-material/MenuBookRounded";
-import AutoFixHighRoundedIcon from "@mui/icons-material/AutoFixHighRounded";
 import QuizRoundedIcon from "@mui/icons-material/QuizRounded";
 import InsertChartRoundedIcon from "@mui/icons-material/InsertChartRounded";
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
@@ -57,28 +56,28 @@ const Sidebar: React.FC<SidebarProps> = ({
       isDisabled: false,
     },
     {
-      text: "Sổ tay từ vựng",
+      text: "Chủ đề từ vựng",
       icon: <MenuBookRoundedIcon />,
       path: "/user/vocabulary",
       isDisabled: false,
     },
     {
-      text: "Luyện tập AI",
-      icon: <AutoFixHighRoundedIcon />,
-      path: "/user/ai-practice",
-      isDisabled: true,
-    },
-    {
-      text: "Kiểm tra & Ôn tập",
+      text: "Lịch sử học tập",
       icon: <QuizRoundedIcon />,
-      path: "/user/quizzes",
-      isDisabled: true,
+      path: "/user/sessions",
+      isDisabled: false,
     },
     {
-      text: "Tiến độ học",
+      text: "Ôn tập & Streak",
       icon: <InsertChartRoundedIcon />,
-      path: "/user/progress",
-      isDisabled: true,
+      path: "/user/reviews",
+      isDisabled: false,
+    },
+    {
+      text: "Cài đặt học tập",
+      icon: <SettingsRoundedIcon />,
+      path: "/user/learning-settings",
+      isDisabled: false,
     },
   ];
 
@@ -138,6 +137,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           </Typography>
         </Box>
         <IconButton
+          aria-label={isMobile ? "Đóng menu" : "Thu gọn menu"}
           onClick={isMobile ? onMobileClose : onDesktopToggle}
           size="small"
           sx={{ color: "text.secondary" }}
@@ -168,13 +168,21 @@ const Sidebar: React.FC<SidebarProps> = ({
         <List sx={{ pt: 0 }}>
           {overviewMenu.map((item) => {
             // Logic Active: Sáng lên khi URL hiện tại khớp với path
-            const isActive = router.pathname.startsWith(item.path);
+            const isActive =
+              router.pathname.startsWith(item.path) ||
+              (item.path === "/user/vocabulary" &&
+                router.pathname.startsWith("/user/topics/")) ||
+              (item.path === "/user/sessions" &&
+                router.pathname.startsWith("/user/study/"));
 
             return (
               <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
                 <ListItemButton
                   // Chuyển hướng khi click
-                  onClick={() => router.push(item.path)}
+                  onClick={() => {
+                    void router.push(item.path);
+                    onMobileClose();
+                  }}
                   disabled={item.isDisabled}
                   sx={{
                     borderRadius: 2,

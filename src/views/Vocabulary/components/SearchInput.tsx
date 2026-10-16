@@ -1,6 +1,6 @@
 
-import React, { useMemo, useState } from 'react';
-import { Box, Typography, TextField, Button, InputAdornment, useTheme, Stack, alpha, Chip, Divider, Pagination } from '@mui/material';
+import React, { useState } from 'react';
+import { TextField, Button, InputAdornment } from '@mui/material';
 import { AutoAwesome as AutoAwesomeIcon, Search as SearchIcon } from '@mui/icons-material';
 
 export const SearchInput = ({ onSearch }: { onSearch: (keyword: string) => void }) => {

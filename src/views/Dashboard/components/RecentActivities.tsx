@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Card, List, ListItem, ListItemAvatar, Avatar, ListItemText, Chip, alpha } from '@mui/material';
+import { Box, Typography, Card, List, ListItem, ListItemAvatar, Avatar, ListItemText, alpha } from '@mui/material';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';

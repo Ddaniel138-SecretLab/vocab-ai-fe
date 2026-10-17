@@ -1,5 +1,5 @@
 import ExampleText from "@/components/learning/ExampleText";
-import LocalFireDepartmentRounded from "@mui/icons-material/LocalFireDepartmentRounded";
+import StreakSummary from "@/components/learning/StreakSummary";
 import { useRef, useState } from "react";
 import { useRouter } from "next/router";
 import {
@@ -70,40 +70,7 @@ export default function ReviewsView() {
         </Alert>
       )}
       <QueryState {...streak} retry={streak.reload} />
-      {streak.data && (
-        <Paper variant="outlined" sx={{ p: 3, mb: 3 }}>
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={3}>
-            <Box>
-              <Typography variant="h4" sx={{ fontWeight: 800 }}>
-                <LocalFireDepartmentRounded
-                  color="warning"
-                  sx={{ verticalAlign: "middle", mr: 0.5 }}
-                />{" "}
-                {streak.data.currentStreak} ngày
-              </Typography>
-              <Typography>Streak hiện tại</Typography>
-            </Box>
-            <Box>
-              <Typography variant="h4" sx={{ fontWeight: 800 }}>
-                {streak.data.longestStreak}
-              </Typography>
-              <Typography>Chuỗi dài nhất</Typography>
-            </Box>
-            <Box>
-              <Typography variant="h4" sx={{ fontWeight: 800 }}>
-                {streak.data.totalStudyDays}
-              </Typography>
-              <Typography>Tổng ngày đã học</Typography>
-            </Box>
-          </Stack>
-          <Typography variant="body2" sx={{ mt: 2 }} color="text.secondary">
-            {streak.data.studiedToday
-              ? "Đã học hôm nay."
-              : "Chưa hoàn thành phiên nào hôm nay."}{" "}
-            Streak chỉ tăng khi hoàn thành phiên học.
-          </Typography>
-        </Paper>
-      )}
+      {streak.data && <StreakSummary streak={streak.data} />}
       <Typography variant="h6" sx={{ mb: 2 }}>
         Từ đến hạn ôn {due.data ? `(${due.data.total})` : ""}
       </Typography>

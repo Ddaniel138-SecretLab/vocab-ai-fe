@@ -28,7 +28,7 @@ export const learningApi = {
       vocabularyGenerated: boolean;
     }>("/ai/topics", {
       ...post({ count }),
-      signal: AbortSignal.timeout(180000),
+      signal: AbortSignal.timeout(300000),
     }),
   createSession: (topicId: string, type: SessionType, size: number) =>
     apiRequest<{ session: StudySession }>(
@@ -58,7 +58,7 @@ export const learningApi = {
   generate: (topicId: string, count: number) =>
     apiRequest<GeneratedResult>(`/ai/topics/${topicId}/vocabulary`, {
       ...post({ count, fresh: true }),
-      signal: AbortSignal.timeout(180000),
+      signal: AbortSignal.timeout(300000),
     }),
   resolveAudio: (topicId: string) =>
     apiRequest<{

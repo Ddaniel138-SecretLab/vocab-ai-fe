@@ -1,3 +1,10 @@
+import { Avatar, Box, Paper } from "@mui/material";
+import ArchiveOutlined from "@mui/icons-material/ArchiveOutlined";
+import {
+  adminPanelSx,
+  RoleBadge,
+  UserStatus,
+} from "@/components/admin/AdminUi";
 import { useRef, useState } from "react";
 import Link from "next/link";
 import {
@@ -62,15 +69,109 @@ export default function UserDetailView({ id }: { id: string }) {
       )}
       {user && (
         <Stack spacing={3}>
-          <Typography sx={{ overflowWrap: "anywhere" }}>
-            ID: {user.id} · Tạo: {dateTime(user.createdAt)} · Đăng nhập:{" "}
-            {dateTime(user.lastLoginAt)}
-          </Typography>
-          <Typography>
-            {user._count.studySessions} phiên học ·{" "}
-            {user._count.vocabularyProgress} tiến độ từ ·{" "}
-            {user._count.createdTopics} chủ đề đã tạo
-          </Typography>
+          <Paper variant="outlined" sx={{ ...adminPanelSx, p: 3 }}>
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={2}
+              sx={{ alignItems: { sm: "center" }, mb: 3 }}
+            >
+              <Avatar
+                sx={{
+                  width: 56,
+                  height: 56,
+                  bgcolor: "#EDE7F8",
+                  color: "primary.dark",
+                  fontWeight: 700,
+                  fontSize: 22,
+                }}
+              >
+                {(user.profile?.displayName || user.email)[0].toUpperCase()}
+              </Avatar>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography
+                  sx={{
+                    fontSize: 18,
+                    fontWeight: 700,
+                    overflowWrap: "anywhere",
+                  }}
+                >
+                  {user.profile?.displayName || user.email}
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: 12,
+                    color: "text.secondary",
+                    mt: 0.5,
+                    overflowWrap: "anywhere",
+                  }}
+                >
+                  {user.email}
+                </Typography>
+              </Box>
+              <Stack direction="row" sx={{ flexWrap: "wrap", gap: 1 }}>
+                <RoleBadge role={user.role} />
+                <UserStatus user={user} />
+              </Stack>
+            </Stack>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns:
+                  "repeat(auto-fit,minmax(min(100%,170px),1fr))",
+                gap: 2,
+              }}
+            >
+              {[
+                { label: "Mã tài khoản", value: user.id },
+                { label: "Ngày tạo", value: dateTime(user.createdAt) },
+                {
+                  label: "Đăng nhập gần nhất",
+                  value: dateTime(user.lastLoginAt),
+                },
+              ].map((i) => (
+                <Box key={i.label}>
+                  <Typography
+                    sx={{ fontSize: 10, color: "text.secondary", mb: 0.75 }}
+                  >
+                    {i.label}
+                  </Typography>
+                  <Typography sx={{ fontSize: 11, overflowWrap: "anywhere" }}>
+                    {i.value}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          </Paper>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3,minmax(0,1fr))",
+              gap: 1.5,
+            }}
+          >
+            {[
+              { label: "Phiên học", value: user._count.studySessions },
+              { label: "Tiến độ từ", value: user._count.vocabularyProgress },
+              { label: "Chủ đề đã tạo", value: user._count.createdTopics },
+            ].map((i) => (
+              <Paper
+                key={i.label}
+                variant="outlined"
+                sx={{ ...adminPanelSx, p: { xs: 1.5, sm: 2.5 } }}
+              >
+                <Typography
+                  sx={{ fontSize: 26, fontWeight: 700, color: "primary.dark" }}
+                >
+                  {i.value}
+                </Typography>
+                <Typography
+                  sx={{ fontSize: 11, color: "text.secondary", mt: 0.5 }}
+                >
+                  {i.label}
+                </Typography>
+              </Paper>
+            ))}
+          </Box>
           {user.deletedAt ? (
             <Alert severity="warning">
               Tài khoản đã lưu trữ lúc {dateTime(user.deletedAt)}. Lịch sử được
@@ -86,14 +187,52 @@ export default function UserDetailView({ id }: { id: string }) {
                   query.reload();
                 }}
               />
-              <Button
-                color="error"
+              <Paper
                 variant="outlined"
-                disabled={user.id === auth.user?.id || busy}
-                onClick={() => setConfirm(true)}
+                sx={{
+                  ...adminPanelSx,
+                  p: 2.5,
+                  borderColor: "#EFD9D7",
+                  bgcolor: "#FFFAF9",
+                }}
               >
-                Lưu trữ tài khoản
-              </Button>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={2}
+                  sx={{
+                    justifyContent: "space-between",
+                    alignItems: { sm: "center" },
+                  }}
+                >
+                  <Box>
+                    <Typography
+                      sx={{ fontSize: 14, fontWeight: 700, color: "#A65E55" }}
+                    >
+                      Lưu trữ tài khoản
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: 11,
+                        color: "text.secondary",
+                        mt: 0.75,
+                        lineHeight: 1.8,
+                      }}
+                    >
+                      Dừng quyền đăng nhập, giữ nguyên lịch sử học tập.
+                    </Typography>
+                  </Box>
+                  <Button
+                    color="error"
+                    variant="outlined"
+                    startIcon={<ArchiveOutlined />}
+                    disabled={user.id === auth.user?.id || busy}
+                    onClick={() => setConfirm(true)}
+                    sx={{ flexShrink: 0 }}
+                  >
+                    Lưu trữ tài khoản
+                  </Button>
+                </Stack>
+              </Paper>
             </>
           )}
         </Stack>

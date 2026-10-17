@@ -170,8 +170,7 @@ export default function TopicDetailView({ topicId }: { topicId: string }) {
                   !Number.isInteger(count) ||
                   count < 1 ||
                   count > 20 ||
-                  count > quota.data.remaining ||
-                  count > 100 - topic.data.topic._count.vocabulary
+                  count > quota.data.remaining
                 }
                 onClick={() =>
                   void action("ai", async () => {
@@ -207,12 +206,35 @@ export default function TopicDetailView({ topicId }: { topicId: string }) {
             </Stack>
             <QueryState {...quota} retry={quota.reload} />
             {quota.data && (
-              <Typography variant="body2" sx={{ mt: 2 }}>
-                Chủ đề này còn {quota.data.remaining}/{quota.data.limit} từ mới
-                hôm nay; đã tạo {quota.data.used}, đang xử lý{" "}
-                {quota.data.reserved}. Hạn mức dùng chung cho tất cả người học,
-                theo ngày {quota.data.dateKey} ({quota.data.timeZone}).
-              </Typography>
+              <Box
+                role="group"
+                aria-label="Hạn mức từ vựng của bạn"
+                sx={{ mt: 2.5, p: 2, bgcolor: "#F6F2FF", borderRadius: "14px" }}
+              >
+                <Typography sx={{ fontSize: 12, fontWeight: 700, mb: 1.5 }}>
+                  Hạn mức của bạn trong chủ đề này hôm nay
+                </Typography>
+                <Stack direction="row" sx={{ flexWrap: "wrap", gap: 1 }}>
+                  <Chip size="small" label={`Đã tạo: ${quota.data.used}`} />
+                  <Chip
+                    size="small"
+                    label={`Đang xử lý: ${quota.data.reserved}`}
+                  />
+                  <Chip
+                    data-testid="word-quota-remaining"
+                    size="small"
+                    color="success"
+                    variant="outlined"
+                    label={`Còn lại: ${quota.data.remaining}/${quota.data.limit}`}
+                  />
+                </Stack>
+                <Typography
+                  sx={{ fontSize: 10, color: "text.secondary", mt: 1.5 }}
+                >
+                  Tối đa 20 từ mới/người/chủ đề/ngày. Lượt tạo của người khác
+                  không trừ hạn mức của bạn.
+                </Typography>
+              </Box>
             )}
             {ai.error ? (
               <Typography variant="caption" color="error">

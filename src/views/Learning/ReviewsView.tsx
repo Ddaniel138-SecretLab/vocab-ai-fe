@@ -1,3 +1,4 @@
+import ExampleText from "@/components/learning/ExampleText";
 import LocalFireDepartmentRounded from "@mui/icons-material/LocalFireDepartmentRounded";
 import { useRef, useState } from "react";
 import { useRouter } from "next/router";
@@ -99,8 +100,7 @@ export default function ReviewsView() {
             {streak.data.studiedToday
               ? "Đã học hôm nay."
               : "Chưa hoàn thành phiên nào hôm nay."}{" "}
-            Múi giờ: {streak.data.timeZone}. Streak chỉ tăng khi hoàn thành
-            phiên học.
+            Streak chỉ tăng khi hoàn thành phiên học.
           </Typography>
         </Paper>
       )}
@@ -113,16 +113,40 @@ export default function ReviewsView() {
           {due.data.items.length ? (
             <Box sx={cardGrid}>
               {due.data.items.map((entry) => (
-                <Paper key={entry.id} variant="outlined" sx={{ p: 3 }}>
+                <Paper
+                  key={entry.id}
+                  variant="outlined"
+                  sx={{
+                    p: 2.5,
+                    borderRadius: 4,
+                    borderColor: "#E9E5F2",
+                    minWidth: 0,
+                  }}
+                >
+                  <Stack
+                    direction="row"
+                    sx={{ justifyContent: "flex-end", mb: 2 }}
+                  >
+                    <Chip
+                      size="small"
+                      label={entry.vocabulary.topic.title}
+                      sx={{
+                        bgcolor: "#F0ECFF",
+                        color: "primary.dark",
+                        maxWidth: "100%",
+                      }}
+                    />
+                  </Stack>
                   <Typography variant="h6" sx={{ fontWeight: 700 }}>
                     {entry.vocabulary.word}
                   </Typography>
                   <Typography>{entry.vocabulary.meaning}</Typography>
-                  <Chip
-                    size="small"
-                    label={entry.vocabulary.topic.title}
-                    sx={{ my: 1 }}
-                  />
+                  <Box sx={{ my: 2 }}>
+                    <ExampleText
+                      sentence={entry.vocabulary.exampleSentence}
+                      translation={entry.vocabulary.exampleTranslation}
+                    />
+                  </Box>
                   <Typography variant="body2" color="text.secondary">
                     {entry.nextReviewAt
                       ? `Đến hạn: ${dateTime(entry.nextReviewAt)}`

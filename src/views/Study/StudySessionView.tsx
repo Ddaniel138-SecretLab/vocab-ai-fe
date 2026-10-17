@@ -1,3 +1,5 @@
+import FlipStudyCard from "@/components/learning/FlipStudyCard";
+import ExampleText from "@/components/learning/ExampleText";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
@@ -143,7 +145,16 @@ export default function StudySessionView({ sessionId }: { sessionId: string }) {
           )}
           {completed ? (
             <>
-              <Paper variant="outlined" sx={{ p: 3, mb: 3 }}>
+              <Paper
+                variant="outlined"
+                sx={{
+                  p: { xs: 3, sm: 4 },
+                  mb: 3,
+                  borderRadius: 4,
+                  bgcolor: "#F1ECFF",
+                  borderColor: "#DCD2F6",
+                }}
+              >
                 <Typography variant="h5" sx={{ fontWeight: 700 }}>
                   {session.type === "QUIZ"
                     ? `Điểm: ${session.score ?? "—"}/100`
@@ -156,20 +167,38 @@ export default function StudySessionView({ sessionId }: { sessionId: string }) {
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Hoàn thành lúc {dateTime(session.completedAt)}. Tiến độ,
-                  streak và lịch ôn được backend cập nhật.
+                  streak và lịch ôn đã được cập nhật.
                 </Typography>
               </Paper>
               <Stack spacing={2}>
                 {session.items.map((entry) => (
-                  <Paper key={entry.id} variant="outlined" sx={{ p: 3 }}>
+                  <Paper
+                    key={entry.id}
+                    variant="outlined"
+                    sx={{ p: 3, borderRadius: 4 }}
+                  >
                     <Stack
                       direction="row"
                       spacing={1}
-                      sx={{ alignItems: "center", mb: 1 }}
+                      sx={{
+                        flexDirection: "column",
+                        alignItems: "stretch",
+                        mb: 1,
+                      }}
                     >
-                      <Typography variant="h6">{entry.word}</Typography>
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontWeight: 700,
+                          overflowWrap: "anywhere",
+                          order: 2,
+                        }}
+                      >
+                        {entry.word}
+                      </Typography>
                       <Chip
                         size="small"
+                        sx={{ alignSelf: "flex-end", mb: 1 }}
                         color={
                           session.type === "QUIZ"
                             ? entry.isCorrect
@@ -203,12 +232,12 @@ export default function StudySessionView({ sessionId }: { sessionId: string }) {
                         </Typography>
                       </>
                     )}
-                    <Typography variant="body2" sx={{ mt: 1 }}>
-                      {entry.exampleSentence}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {entry.exampleTranslation}
-                    </Typography>
+                    <Box sx={{ mt: 2 }}>
+                      <ExampleText
+                        sentence={entry.exampleSentence}
+                        translation={entry.exampleTranslation}
+                      />
+                    </Box>
                     {session.type === "FLASHCARD" && <WordAudio {...entry} />}
                   </Paper>
                 ))}
@@ -242,50 +271,40 @@ export default function StudySessionView({ sessionId }: { sessionId: string }) {
                     ? (session.answeredItems / session.totalItems) * 100
                     : 0
                 }
-                sx={{ mb: 3 }}
+                sx={{
+                  mb: 3,
+                  height: 8,
+                  borderRadius: 5,
+                  bgcolor: "#EAE4F6",
+                  "& .MuiLinearProgress-bar": { borderRadius: 5 },
+                }}
               />
               <Paper
                 variant="outlined"
-                sx={{ p: { xs: 3, sm: 5 }, textAlign: "center", mb: 3 }}
+                sx={{
+                  p: { xs: 2.5, sm: 4 },
+                  textAlign: "center",
+                  mb: 3,
+                  borderRadius: 5,
+                  borderColor: "#E9E2F3",
+                }}
               >
                 <Typography color="text.secondary" sx={{ mb: 2 }}>
                   Mục {index + 1}/{session.items.length}
                 </Typography>
-                <Typography
-                  variant="h3"
-                  sx={{ fontWeight: 800, overflowWrap: "anywhere", mb: 2 }}
-                >
-                  {item.word}
-                </Typography>
                 {session.type === "FLASHCARD" ? (
                   <>
-                    <Typography color="text.secondary">
-                      {item.phonetic}
-                    </Typography>
-                    <WordAudio key={item.id} {...item} />
-                    {flipped ? (
-                      <Box sx={{ my: 3 }}>
-                        <Typography variant="h5" sx={{ mb: 2 }}>
-                          {item.meaning}
-                        </Typography>
-                        <Typography>{item.exampleSentence}</Typography>
-                        <Typography color="text.secondary">
-                          {item.exampleTranslation}
-                        </Typography>
-                      </Box>
-                    ) : (
-                      <Button
-                        onClick={() => setFlipped(true)}
-                        sx={{ my: 3 }}
-                        variant="outlined"
-                      >
-                        Lật thẻ xem nghĩa
-                      </Button>
-                    )}
+                    <FlipStudyCard
+                      key={item.id}
+                      item={item}
+                      flipped={flipped}
+                      onFlip={() => setFlipped((v) => !v)}
+                      disabled={busy}
+                    />
                     <Stack
                       direction={{ xs: "column", sm: "row" }}
                       spacing={2}
-                      sx={{ justifyContent: "center" }}
+                      sx={{ justifyContent: "center", mt: 3 }}
                     >
                       <Button
                         variant={
@@ -309,7 +328,39 @@ export default function StudySessionView({ sessionId }: { sessionId: string }) {
                   </>
                 ) : (
                   <>
-                    <Typography sx={{ mb: 2 }}>
+                    <Box
+                      sx={{
+                        py: 3,
+                        px: 2,
+                        bgcolor: "#F7F4FF",
+                        borderRadius: 4,
+                        mb: 3,
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          letterSpacing: 1.5,
+                          color: "primary.main",
+                          mb: 1.5,
+                        }}
+                      >
+                        BẠN HIỂU TỪ NÀY CHỨ?
+                      </Typography>
+                      <Typography
+                        lang="en"
+                        sx={{
+                          fontSize: { xs: 32, sm: 44 },
+                          fontWeight: 700,
+                          letterSpacing: -1,
+                          overflowWrap: "anywhere",
+                        }}
+                      >
+                        {item.word}
+                      </Typography>
+                    </Box>
+                    <Typography sx={{ mb: 2, fontWeight: 600, fontSize: 14 }}>
                       Chọn nghĩa đúng của từ này:
                     </Typography>
                     <RadioGroup
@@ -323,14 +374,61 @@ export default function StudySessionView({ sessionId }: { sessionId: string }) {
                           key={n}
                           value={n}
                           control={<Radio />}
-                          label={option}
+                          label={
+                            <Stack
+                              direction="row"
+                              spacing={1.5}
+                              sx={{ alignItems: "center" }}
+                            >
+                              <Box
+                                component="span"
+                                sx={{
+                                  display: "grid",
+                                  placeItems: "center",
+                                  width: 30,
+                                  height: 30,
+                                  flexShrink: 0,
+                                  bgcolor:
+                                    (selected ?? item.selectedIndex) === n
+                                      ? "primary.main"
+                                      : "#F1EDF8",
+                                  color:
+                                    (selected ?? item.selectedIndex) === n
+                                      ? "white"
+                                      : "text.secondary",
+                                  borderRadius: 2,
+                                  fontSize: 12,
+                                  fontWeight: 700,
+                                }}
+                              >
+                                {String.fromCharCode(65 + n)}
+                              </Box>
+                              <Typography
+                                sx={{ fontSize: 14, overflowWrap: "anywhere" }}
+                              >
+                                {option}
+                              </Typography>
+                            </Stack>
+                          }
                           disabled={busy}
                           sx={{
-                            p: 1,
-                            mb: 1,
+                            p: 1.5,
+                            mx: 0,
+                            mb: 1.5,
                             border: 1,
-                            borderColor: "divider",
-                            borderRadius: 2,
+                            borderColor:
+                              (selected ?? item.selectedIndex) === n
+                                ? "primary.main"
+                                : "#E8E2F2",
+                            bgcolor:
+                              (selected ?? item.selectedIndex) === n
+                                ? "#F3EEFF"
+                                : "white",
+                            borderRadius: 3,
+                            transition:
+                              "background-color .15s,border-color .15s",
+                            "& .MuiRadio-root": { mr: 0.5 },
+                            "&:hover": { bgcolor: "#F8F5FF" },
                           }}
                         />
                       ))}

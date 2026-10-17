@@ -23,8 +23,18 @@ import {
   PageTitle,
   QueryState,
 } from "@/components/learning/Common";
+function editableSettings(settings: LearningSettings): LearningSettings {
+  return {
+    reminderEnabled: settings.reminderEnabled,
+    reminderHour: settings.reminderHour,
+    reminderMinute: settings.reminderMinute,
+    reviewBatchSize: settings.reviewBatchSize,
+  };
+}
 function SettingsForm({ initial }: { initial: SettingsResponse }) {
-  const [settings, setSettings] = useState<LearningSettings>(initial.settings);
+  const [settings, setSettings] = useState<LearningSettings>(() =>
+    editableSettings(initial.settings),
+  );
   const [time, setTime] = useState(
     `${String(initial.settings.reminderHour).padStart(2, "0")}:${String(initial.settings.reminderMinute).padStart(2, "0")}`,
   );
@@ -56,11 +66,12 @@ function SettingsForm({ initial }: { initial: SettingsResponse }) {
     setNotice("");
     try {
       const result = await learningApi.saveSettings({
-        ...settings,
+        reminderEnabled: settings.reminderEnabled,
+        reviewBatchSize: settings.reviewBatchSize,
         reminderHour: hour,
         reminderMinute: minute,
       });
-      setSettings(result.settings);
+      setSettings(editableSettings(result.settings));
       setNotice("Đã lưu cài đặt học tập.");
     } catch (e) {
       setError(errorMessage(e));
@@ -117,7 +128,7 @@ function SettingsForm({ initial }: { initial: SettingsResponse }) {
           value={time}
           onChange={(e) => setTime(e.target.value)}
           slotProps={{ inputLabel: { shrink: true }, htmlInput: { step: 60 } }}
-          helperText={`Múi giờ máy chủ: ${initial.timeZone}`}
+          helperText="Chọn giờ bạn muốn nhận email nhắc học."
           disabled={!!busy}
         />
         <TextField

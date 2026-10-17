@@ -74,7 +74,15 @@ export const learningApi = {
   saveSettings: (input: LearningSettings) =>
     apiRequest<Omit<SettingsResponse, "schedulerEnabled">>(
       "/learning/settings",
-      { method: "PATCH", body: JSON.stringify(input) },
+      {
+        method: "PATCH",
+        body: JSON.stringify({
+          reminderEnabled: input.reminderEnabled,
+          reminderHour: input.reminderHour,
+          reminderMinute: input.reminderMinute,
+          reviewBatchSize: input.reviewBatchSize,
+        }),
+      },
     ),
   testReminder: () =>
     apiRequest<{ message: string }>("/learning/reminders/test", post()),

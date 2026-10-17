@@ -56,6 +56,7 @@ let settings = {
   reminderMinute: 0,
   reviewBatchSize: 2,
 };
+let largeCatalog = false;
 let studiedToday = false,
   failAnswer = false,
   failGenerate = false,
@@ -189,8 +190,10 @@ const server = http.createServer(async (req, res) => {
   if (!req.headers.cookie?.includes("vocab_session=valid"))
     return send(401, { message: "Please log in." });
   if (route === "/api/auth/me") return send(200, { user });
-  if (route === "/api/users/me/profile")
+  if (route === "/api/users/me/profile") {
+    if (req.method === "PATCH") Object.assign(profile, input);
     return send(200, { profile, isProfileComplete: true });
+  }
   if (route === "/api/topics/recommended")
     return send(200, {
       source: "PROFILE_RULES",
@@ -209,7 +212,10 @@ const server = http.createServer(async (req, res) => {
     return send(404, { message: "Topic not found." });
   if (/^\/api\/topics\/[^/]+$/.test(route))
     return send(200, {
-      topic: { ...topics[0], _count: { vocabulary: words.length } },
+      topic: {
+        ...topics[0],
+        _count: { vocabulary: largeCatalog ? 120 : words.length },
+      },
     });
   if (/\/vocabulary$/.test(route) && route.startsWith("/api/topics/"))
     return send(200, paginate(words, url));
@@ -232,7 +238,7 @@ const server = http.createServer(async (req, res) => {
   if (/^\/api\/ai\/topics\//.test(route)) {
     generateCount++;
     if (failGenerate) return send(429, { message: "AI daily quota reached." });
-    const batch = Array.from({ length: input.count }, (_, i) => ({
+    const batch = Array.from({ length: input.count - 1 }, (_, i) => ({
       ...words[0],
       id: `ai-${i}`,
       word: `generated${i + 1}`,
@@ -245,6 +251,10 @@ const server = http.createServer(async (req, res) => {
       model: "test-model",
       words: batch,
       audioMissing: 0,
+      partial: true,
+      createdCount: batch.length,
+      requestedCount: input.count,
+      message: `Đã thêm ${batch.length}/${input.count} từ mới. Một số gợi ý bị trùng hoặc chưa phù hợp.`,
     });
   }
   if (/\/audio\/resolve$/.test(route))
@@ -354,9 +364,30 @@ const server = http.createServer(async (req, res) => {
     });
   }
   if (route === "/api/learning/settings") {
-    if (req.method === "PATCH") settings = { ...settings, ...input };
+    if (req.method === "PATCH") {
+      const extra = Object.keys(input).filter(
+        (key) =>
+          ![
+            "reminderEnabled",
+            "reminderHour",
+            "reminderMinute",
+            "reviewBatchSize",
+          ].includes(key),
+      );
+      if (extra.length)
+        return send(400, {
+          message: extra.map((key) => `property ${key} should not exist`),
+        });
+      settings = { ...settings, ...input };
+    }
     return send(200, {
-      settings,
+      settings: {
+        ...settings,
+        id: "setting-id",
+        userId: user.id,
+        createdAt: "2026-10-16T00:00:00Z",
+        updatedAt: "2026-10-16T00:00:00Z",
+      },
       timeZone: "Asia/Ho_Chi_Minh",
       ...(req.method === "GET" ? { schedulerEnabled: true } : {}),
     });
@@ -442,6 +473,17 @@ const server = http.createServer(async (req, res) => {
         ),
         false,
       );
+    const shot = async (name) => {
+      if (!process.env.SMOKE_SCREENSHOT_DIR) return;
+      const fs = require("node:fs");
+      fs.mkdirSync(process.env.SMOKE_SCREENSHOT_DIR, { recursive: true });
+      await page.screenshot({
+        path: path.join(process.env.SMOKE_SCREENSHOT_DIR, name + ".png"),
+        fullPage: true,
+      });
+    };
+    const noTimezone = async () =>
+      assert(!/Asia\/Ho|Múi giờ/.test(await page.locator("body").innerText()));
     const checks = [];
     await go("/login");
     await page.getByLabel("Email").fill(user.email);
@@ -451,7 +493,46 @@ const server = http.createServer(async (req, res) => {
       .click();
     await page.waitForURL("**/user/dashboard");
     await visible("Trường học");
-    checks.push("login and real dashboard contract");
+    await noOverflow();
+    await noTimezone();
+    await shot("dashboard-desktop");
+    await page
+      .getByRole("button", { name: "Thu gọn menu", exact: true })
+      .click();
+    const nav = page.getByRole("navigation", { name: "Điều hướng học tập" });
+    await page.waitForTimeout(300);
+    assert.equal(Math.round((await nav.boundingBox()).width), 80);
+    assert.equal(
+      (
+        await nav
+          .getByRole("link", { name: "Tổng quan", exact: true })
+          .innerText()
+      ).trim(),
+      "",
+    );
+    await shot("sidebar-mini");
+    await nav.getByRole("link", { name: "Hồ sơ cá nhân", exact: true }).click();
+    await page.waitForURL("**/user/profile");
+    await page.getByText("Cách bạn muốn học", { exact: true }).waitFor();
+    await page.waitForTimeout(300);
+    assert.equal(
+      Math.round(
+        (
+          await page
+            .getByRole("navigation", { name: "Điều hướng học tập" })
+            .boundingBox()
+        ).width,
+      ),
+      80,
+    );
+    await page
+      .getByRole("button", { name: "Mở rộng menu", exact: true })
+      .click();
+    await go("/user/dashboard");
+    await visible("Trường học");
+    checks.push(
+      "login and real dashboard contract; mini sidebar icons and accessible labels",
+    );
     await page.getByRole("link", { name: "Tiếp tục", exact: true }).click();
     await page.waitForURL("**/user/study/session-1");
     await visible("Mục 2/2");
@@ -460,10 +541,43 @@ const server = http.createServer(async (req, res) => {
         .getByRole("button", { name: "Hoàn thành phiên học", exact: true })
         .isDisabled(),
     );
+    assert(
+      await page
+        .getByRole("button", { name: "Đã nhớ", exact: true })
+        .isDisabled(),
+    );
+    await shot("flashcard-front");
     await page.getByRole("button", { name: "Lật thẻ xem nghĩa" }).click();
+    assert.equal(
+      await page.getByTestId("flip-card").getAttribute("data-flipped"),
+      "true",
+    );
+    await page.getByText("VÍ DỤ TIẾNG ANH", { exact: true }).waitFor();
+    await page.getByText("DỊCH NGHĨA", { exact: true }).waitFor();
+    await page.waitForTimeout(700);
+    await shot("flashcard-back");
+    await page
+      .getByRole("button", { name: "Lật lại xem từ", exact: true })
+      .click();
+    assert(
+      await page
+        .getByRole("button", { name: "Đã nhớ", exact: true })
+        .isDisabled(),
+    );
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    assert.equal(
+      await page
+        .getByTestId("flip-card")
+        .evaluate((el) => getComputedStyle(el).transitionDuration),
+      "0s",
+    );
+    await page
+      .getByRole("button", { name: "Lật thẻ xem nghĩa", exact: true })
+      .click();
+    await page.emulateMedia({ reducedMotion: "no-preference" });
     failAnswer = true;
     await page.getByRole("button", { name: "Cần ôn lại", exact: true }).click();
-    await visible("Could not save answer.");
+    await visible("Hệ thống tạm thời chưa xử lý được yêu cầu.");
     assert.equal(sessions.get("session-1").answeredItems, 1);
     await page.getByRole("button", { name: "Cần ôn lại", exact: true }).click();
     await visible("Đã lưu 2/2");
@@ -514,6 +628,7 @@ const server = http.createServer(async (req, res) => {
       .click();
     await page.waitForURL("**/user/study/session-2");
     await visible("Chọn nghĩa đúng");
+    await shot("quiz-desktop");
     assert.equal(
       await page.getByText("Đáp án đúng:", { exact: false }).count(),
       0,
@@ -536,6 +651,7 @@ const server = http.createServer(async (req, res) => {
     await visible("Điểm: 50/100");
     await visible("Đáp án đúng:");
     checks.push("quiz persistence, hidden solutions and server score");
+    largeCatalog = true;
     await go("/user/topics/topic-1");
     await page
       .getByRole("button", { name: "Tạo thêm từ bằng AI", exact: true })
@@ -547,7 +663,11 @@ const server = http.createServer(async (req, res) => {
       ),
     );
     await page.getByLabel("Số từ AI").fill("21");
-    assert(await page.getByRole("button", {name:"Tạo thêm từ bằng AI",exact:true}).isDisabled());
+    assert(
+      await page
+        .getByRole("button", { name: "Tạo thêm từ bằng AI", exact: true })
+        .isDisabled(),
+    );
     await page.getByLabel("Số từ AI").fill("4");
     await page
       .getByRole("button", { name: "Tạo thêm từ bằng AI", exact: true })
@@ -555,7 +675,11 @@ const server = http.createServer(async (req, res) => {
         button.click();
         button.click();
       });
-    await visible("Đã tạo và lưu 4 từ mới.");
+    await visible("Đã thêm 3/4 từ mới.");
+    largeCatalog = false;
+    await page
+      .getByRole("group", { name: "Hạn mức từ vựng của bạn", exact: true })
+      .waitFor();
     assert.equal(generateCount, 1);
     await page.reload();
     await visible("Danh sách từ vựng");
@@ -567,8 +691,8 @@ const server = http.createServer(async (req, res) => {
     await page
       .getByRole("button", { name: "Tạo thêm từ bằng AI", exact: true })
       .click();
-    await visible("AI daily quota reached.");
-    assert.equal(words.length, 10);
+    await visible("Bạn đã đạt giới hạn thao tác.");
+    assert.equal(words.length, 9);
     checks.push("AI quota error preserves vocabulary");
     await page
       .getByRole("button", { name: "Bổ sung audio còn thiếu", exact: true })
@@ -592,6 +716,16 @@ const server = http.createServer(async (req, res) => {
     checks.push("history filters");
     await go("/user/reviews");
     await visible("Từ đến hạn ôn (2)");
+    await visible("Hành trình chăm chỉ của bạn");
+    await visible("Chuỗi hiện tại");
+    await visible("Chuỗi dài nhất");
+    await visible("Tổng ngày đã học");
+    await noOverflow();
+    await shot("streak-desktop");
+    await page.setViewportSize({ width: 390, height: 844 });
+    await noOverflow();
+    await shot("streak-mobile");
+    await page.setViewportSize({ width: 1440, height: 1000 });
     await page
       .getByRole("button", { name: "Bắt đầu ôn tập", exact: true })
       .click();
@@ -616,13 +750,23 @@ const server = http.createServer(async (req, res) => {
         .isDisabled(),
     );
     checks.push("mixed-topic review and empty due state");
+    async function saveLearningSettings() {
+      const [response] = await Promise.all([
+        page.waitForResponse(
+          (r) =>
+            r.url().endsWith("/learning/settings") &&
+            r.request().method() === "PATCH",
+        ),
+        page.getByRole("button", { name: "Lưu cài đặt", exact: true }).click(),
+      ]);
+      assert.equal(response.status(), 200);
+      await visible("Đã lưu cài đặt học tập.");
+    }
     await go("/user/learning-settings");
     await page.getByRole("switch").check();
     await page.getByLabel("Giờ nhắc học").fill("20:15");
     await page.getByLabel("Số từ mỗi phiên ôn").fill("3");
-    await page
-      .getByRole("button", { name: "Lưu cài đặt", exact: true })
-      .click();
+    await saveLearningSettings();
     await visible("Đã lưu cài đặt học tập.");
     assert.deepEqual(settings, {
       reminderEnabled: true,
@@ -630,29 +774,92 @@ const server = http.createServer(async (req, res) => {
       reminderMinute: 15,
       reviewBatchSize: 3,
     });
+    await page.getByLabel("Giờ nhắc học").fill("21:30");
+    await saveLearningSettings();
+    await page.waitForFunction(() =>
+      document.body.innerText.includes("Đã lưu cài đặt học tập."),
+    );
+    await page.getByRole("switch").uncheck();
+    await saveLearningSettings();
+    await page.waitForFunction(() =>
+      document.body.innerText.includes("Đã lưu cài đặt học tập."),
+    );
+    assert.deepEqual(settings, {
+      reminderEnabled: false,
+      reminderHour: 21,
+      reminderMinute: 30,
+      reviewBatchSize: 3,
+    });
+    await page.reload();
+    await page.getByRole("switch").waitFor();
+    assert(!(await page.getByRole("switch").isChecked()));
+    assert.equal(await page.getByLabel("Giờ nhắc học").inputValue(), "21:30");
     await page
       .getByRole("button", { name: "Gửi email nhắc học thử", exact: true })
       .click();
     await visible("Đã gửi email thử");
     await page.reload();
     await page.getByLabel("Giờ nhắc học").waitFor();
-    assert.equal(await page.getByLabel("Giờ nhắc học").inputValue(), "20:15");
+    assert.equal(await page.getByLabel("Giờ nhắc học").inputValue(), "21:30");
     checks.push("settings persistence, email test and delivery history");
     await go("/user/topics/missing");
-    await visible("Topic not found.");
+    await visible("Không tìm thấy nội dung này.");
     checks.push("404 error state");
     await page.setViewportSize({ width: 390, height: 844 });
     await go("/user/topics/topic-1");
     await visible("Danh sách từ vựng");
+    await noTimezone();
+    await shot("vocabulary-mobile");
     await noOverflow();
     await page.getByRole("button", { name: "Mở menu", exact: true }).click();
     await page
-      .getByRole("button", { name: "Ôn tập & Streak", exact: true })
+      .getByRole("link", { name: "Ôn tập & Streak", exact: true })
       .click();
     await page.waitForURL("**/user/reviews");
     await visible("Chưa có từ đến hạn ôn.");
     await noOverflow();
     checks.push("mobile layout and menu navigation");
+    await go("/user/profile");
+    await visible("Cách bạn muốn học");
+    await noOverflow();
+    await page.getByLabel("Tên hiển thị").fill("Daniel Learner");
+    await page.getByRole("button", { name: "Lưu hồ sơ", exact: true }).click();
+    await visible("Đã lưu hồ sơ.");
+    assert(
+      calls.some(
+        (c) =>
+          c.method === "PATCH" &&
+          c.route === "/api/users/me/profile" &&
+          c.input.displayName === "Daniel Learner",
+      ),
+    );
+    await shot("profile-mobile");
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await go("/user/profile");
+    await visible("Cách bạn muốn học");
+    await noOverflow();
+    await shot("profile-desktop");
+    await page.setViewportSize({ width: 375, height: 812 });
+    await go("/user/dashboard");
+    await visible("Chủ đề phù hợp với bạn");
+    await noOverflow();
+    await shot("dashboard-mobile");
+    const mobileSession = createSession("FLASHCARD");
+    sessions.set(mobileSession.id, mobileSession);
+    await go("/user/study/" + mobileSession.id);
+    await page
+      .getByRole("button", { name: "Lật thẻ xem nghĩa", exact: true })
+      .click();
+    await page.waitForTimeout(700);
+    await noOverflow();
+    await shot("flashcard-mobile");
+    const mobileQuiz = createSession("QUIZ");
+    sessions.set(mobileQuiz.id, mobileQuiz);
+    await go("/user/study/" + mobileQuiz.id);
+    await visible("Chọn nghĩa đúng");
+    await noOverflow();
+    await shot("quiz-mobile");
+    checks.push("profile save, mobile study cards and reduced-motion flip");
     if (process.env.SMOKE_SCREENSHOT_DIR) {
       const fs = require("node:fs");
       fs.mkdirSync(process.env.SMOKE_SCREENSHOT_DIR, { recursive: true });
@@ -668,6 +875,28 @@ const server = http.createServer(async (req, res) => {
         fullPage: true,
       });
     }
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await go("/user/dashboard");
+    await visible("Góc của bạn");
+    await noOverflow();
+    await shot("dashboard-wide");
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await go("/user/profile");
+    await visible("Cách bạn muốn học");
+    await noOverflow();
+    await page.getByRole("button", { name: "Mở hồ sơ", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Đóng hồ sơ", exact: true })
+      .waitFor();
+    await noOverflow();
+    await shot("profile-drawer-tablet");
+    await page.getByRole("button", { name: "Đóng hồ sơ", exact: true }).click();
+    await page.setViewportSize({ width: 320, height: 700 });
+    await go("/user/study/" + mobileSession.id);
+    await page
+      .getByRole("button", { name: "Lật thẻ xem nghĩa", exact: true })
+      .click();
+    await noOverflow();
     assert.equal(runtimeErrors.length, 0, runtimeErrors.join("\n"));
     assert(calls.every((c) => !c.route.startsWith("/api/admin")));
     checks.push("no runtime errors or admin calls");

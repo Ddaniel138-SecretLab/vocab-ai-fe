@@ -139,6 +139,11 @@ export interface GeneratedResult {
   model: string;
   words: Vocabulary[];
   audioMissing?: number;
+  partial?: boolean;
+  requestedCount?: number;
+  createdCount?: number;
+  attempts?: number;
+  message?: string;
 }
 
 export interface DailyQuota {

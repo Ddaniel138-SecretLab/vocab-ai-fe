@@ -179,7 +179,8 @@ export default function TopicDetailView({ topicId }: { topicId: string }) {
                     setNotice(
                       result.cached
                         ? "Đang hiển thị bộ từ đã tạo gần đây, không tạo thêm bản trùng."
-                        : `Đã tạo và lưu ${result.words.length} từ mới.`,
+                        : result.message ||
+                            `Đã tạo và lưu ${result.words.length} từ mới.`,
                     );
                     refreshWords();
                   })
@@ -267,7 +268,10 @@ export default function TopicDetailView({ topicId }: { topicId: string }) {
             </Alert>
           )}
           {notice && (
-            <Alert severity="success" sx={{ mb: 2 }}>
+            <Alert
+              severity={batch?.partial ? "info" : "success"}
+              sx={{ mb: 2 }}
+            >
               {notice}
             </Alert>
           )}

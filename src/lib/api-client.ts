@@ -52,7 +52,7 @@ export async function apiRequest<T>(
       : data?.message;
     throw new ApiError(
       response.status,
-      message || `Yêu cầu thất bại (${response.status}).`,
+      userFacingApiMessage(response.status, path, message),
     );
   }
   return data as T;
@@ -61,4 +61,29 @@ export function errorMessage(error: unknown) {
   return error instanceof Error
     ? error.message
     : "Có lỗi xảy ra. Vui lòng thử lại.";
+}
+
+// Technical provider messages remain available in the Network response for developers.
+export function userFacingApiMessage(
+  status: number,
+  path: string,
+  message: unknown,
+) {
+  if (typeof message === "string" && /[À-ỹĐđ]/.test(message)) return message;
+  if (status === 401)
+    return path.includes("login")
+      ? "Email hoặc mật khẩu chưa đúng. Bạn hãy kiểm tra lại."
+      : "Phiên đăng nhập đã hết hạn. Bạn hãy đăng nhập lại.";
+  if (status === 403) return "Bạn chưa có quyền thực hiện thao tác này.";
+  if (status === 404)
+    return "Không tìm thấy nội dung này. Bạn hãy tải lại trang.";
+  if (status === 429)
+    return "Bạn đã đạt giới hạn thao tác. Hãy đợi một lúc hoặc kiểm tra hạn mức rồi thử lại.";
+  if (status === 409)
+    return "Dữ liệu đang được cập nhật hoặc đã thay đổi. Bạn hãy tải lại rồi thử lại.";
+  if (status === 400 || status === 422)
+    return "Thông tin chưa hợp lệ. Bạn hãy kiểm tra các mục vừa nhập.";
+  if (path.startsWith("/ai/"))
+    return "AI tạm thời chưa xử lý được yêu cầu. Bạn hãy thử lại sau; có thể tiếp tục học từ hiện có.";
+  return "Hệ thống tạm thời chưa xử lý được yêu cầu. Bạn hãy thử lại sau.";
 }

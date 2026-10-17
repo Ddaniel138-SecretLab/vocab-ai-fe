@@ -1,14 +1,14 @@
-import React from 'react';
-import Head from 'next/head';
-import MainLayout from '@/layouts/MainLayout';
-import Vocabulary from '@/views/Vocabulary/Vocabulary';
-
-
+import Head from "next/head";
+import MainLayout from "@/layouts/MainLayout";
+import TopicsView from "@/views/Topics/TopicsView";
 export default function VocabularyPage() {
   return (
     <>
+      <Head>
+        <title>Chủ đề từ vựng | Vocab AI</title>
+      </Head>
       <MainLayout>
-        <Vocabulary />
+        <TopicsView />
       </MainLayout>
     </>
   );

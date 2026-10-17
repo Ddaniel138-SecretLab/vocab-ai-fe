@@ -36,7 +36,14 @@ export async function apiRequest<T>(
   if (!response.ok) {
     if (
       response.status === 401 &&
-      path !== "/auth/login" &&
+      ![
+        "/auth/login",
+        "/admin/auth/login",
+        "/auth/register/verify-code",
+        "/auth/password/request-code",
+        "/auth/password/verify-code",
+        "/auth/password/reset",
+      ].includes(path) &&
       typeof window !== "undefined"
     )
       window.dispatchEvent(new Event("auth:expired"));

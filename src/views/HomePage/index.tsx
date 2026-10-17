@@ -17,7 +17,7 @@ const ScrollTop = (props: { children: React.ReactElement }) => {
         threshold: 400,
     });
 
-    const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    const handleClick = () => {
         window.scrollTo({
             top: 0,
             behavior: 'smooth',

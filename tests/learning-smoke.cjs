@@ -8,7 +8,7 @@ const assert = require("node:assert/strict");
 const http = require("node:http");
 const { spawn } = require("node:child_process");
 const path = require("node:path");
-const { chromium } = require(
+const { chromium, webkit } = require(
   process.env.PLAYWRIGHT_MODULE_PATH || "playwright",
 );
 const project = path.resolve(__dirname, "..");
@@ -158,7 +158,7 @@ const server = http.createServer(async (req, res) => {
   if (route === "/api/auth/login") {
     res.setHeader(
       "Set-Cookie",
-      "vocab_session=valid; HttpOnly; Path=/; SameSite=Lax",
+      "vocab_session=valid; HttpOnly; Domain=backend.example.com; Path=/; SameSite=None; Secure",
     );
     return send(200, { user });
   }
@@ -439,20 +439,23 @@ const server = http.createServer(async (req, res) => {
       await new Promise((r) => setTimeout(r, 250));
     }
     assert(ready, "FE production server is not ready");
-    browser = await chromium.launch({
-      headless: true,
-      ...(process.env.CHROMIUM_EXECUTABLE_PATH
-        ? { executablePath: process.env.CHROMIUM_EXECUTABLE_PATH }
-        : {}),
-      args: [
-        "--no-sandbox",
-        "--disable-gpu",
-        "--disable-software-rasterizer",
-        "--no-zygote",
-        "--single-process",
-        "--host-resolver-rules=MAP localhost 127.0.0.1",
-      ],
-    });
+    browser =
+      process.env.SMOKE_BROWSER === "webkit"
+        ? await webkit.launch({ headless: true })
+        : await chromium.launch({
+            headless: true,
+            ...(process.env.CHROMIUM_EXECUTABLE_PATH
+              ? { executablePath: process.env.CHROMIUM_EXECUTABLE_PATH }
+              : {}),
+            args: [
+              "--no-sandbox",
+              "--disable-gpu",
+              "--disable-software-rasterizer",
+              "--no-zygote",
+              "--single-process",
+              "--host-resolver-rules=MAP localhost 127.0.0.1",
+            ],
+          });
     const context = await browser.newContext({
       viewport: { width: 1440, height: 1000 },
     });
@@ -897,6 +900,61 @@ const server = http.createServer(async (req, res) => {
       .getByRole("button", { name: "Lật thẻ xem nghĩa", exact: true })
       .click();
     await noOverflow();
+    for (const device of [
+      { name: "desktop", viewport: { width: 1440, height: 900 } },
+      {
+        name: "tablet",
+        viewport: { width: 768, height: 1024 },
+        hasTouch: true,
+      },
+      {
+        name: "mobile",
+        viewport: { width: 390, height: 844 },
+        hasTouch: true,
+        isMobile: true,
+      },
+    ]) {
+      const { name, ...options } = device;
+      const deviceContext = context;
+      const devicePage = page;
+      await devicePage.setViewportSize(options.viewport);
+      await deviceContext.clearCookies();
+      await devicePage.goto("http://localhost:3000/login");
+      await devicePage.getByLabel("Email").fill(user.email);
+      await devicePage.getByLabel(/^Mật khẩu/).fill("Password123");
+      await devicePage
+        .getByRole("button", { name: "Vào học ngay", exact: true })
+        .click();
+      await devicePage.waitForURL("**/user/dashboard");
+      await devicePage.reload();
+      await devicePage
+        .getByText("Chủ đề phù hợp với bạn", { exact: false })
+        .first()
+        .waitFor();
+      const session = (await deviceContext.cookies()).find(
+        (cookie) => cookie.name === "vocab_session",
+      );
+      assert(session && session.httpOnly && session.sameSite === "Lax");
+      assert.equal(session.domain, "localhost");
+      await devicePage.evaluate(() =>
+        fetch("/api/backend/auth/logout", {
+          method: "POST",
+          credentials: "include",
+        }),
+      );
+      const status = await devicePage.evaluate(() =>
+        fetch("/api/backend/auth/me", { credentials: "include" }).then(
+          (response) => response.status,
+        ),
+      );
+      assert.equal(status, 401);
+      assert(
+        !(await deviceContext.cookies()).some(
+          (cookie) => cookie.name === "vocab_session",
+        ),
+      );
+      checks.push(name + " proxy login, reload persistence and logout");
+    }
     assert.equal(runtimeErrors.length, 0, runtimeErrors.join("\n"));
     assert(calls.every((c) => !c.route.startsWith("/api/admin")));
     checks.push("no runtime errors or admin calls");

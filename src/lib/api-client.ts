@@ -11,9 +11,7 @@ export async function apiRequest<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
-  const base = (
-    process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api"
-  ).replace(/\/$/, "");
+  const base = "/api/backend";
   let response: Response;
   try {
     response = await fetch(`${base}${path}`, {
@@ -24,7 +22,7 @@ export async function apiRequest<T>(
         ...(options.body ? { "Content-Type": "application/json" } : {}),
         ...options.headers,
       },
-      signal: options.signal ?? AbortSignal.timeout(20000),
+      signal: options.signal ?? AbortSignal.timeout(90000),
     });
   } catch {
     throw new ApiError(
